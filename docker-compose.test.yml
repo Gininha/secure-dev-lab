@@ -1,8 +1,7 @@
-services:
-  sut:
-    build: ./test/smoke/
-    links:
-      - app
-  app:
-    image: bkimminich/juice-shop:latest
-    build: ./
+services: 
+  juice-shop: 
+    image: bkimminich/juice-shop 
+    container_name: juice_shop 
+    ports: 
+      - "3000:3000" 
+    restart: always
