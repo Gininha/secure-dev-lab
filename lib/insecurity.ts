@@ -40,7 +40,25 @@ interface IAuthenticatedUsers {
   updateFrom: (req: Request, user: ResponseWithUser) => any
 }
 
-export const hash = (data: string) => crypto.createHash('md5').update(data).digest('hex')
+// Parâmetros recomendados para PBKDF2
+const PASSWORD_HASH_ITERATIONS = 100_000
+const PASSWORD_HASH_KEYLEN = 64
+const PASSWORD_HASH_ALGO = 'sha512'
+
+// Idealmente definido em variável de ambiente
+const PASSWORD_HASH_SALT = process.env.PASSWORD_HASH_SALT 
+
+export const hash = (data: string): string => {
+  const derivedKey = crypto.pbkdf2Sync(
+    data,
+    PASSWORD_HASH_SALT,
+    PASSWORD_HASH_ITERATIONS,
+    PASSWORD_HASH_KEYLEN,
+    PASSWORD_HASH_ALGO
+  )
+  return derivedKey.toString('hex')
+}
+
 export const hmac = (data: string) => crypto.createHmac('sha256', 'pa4qacea4VK9t9nGv7yZtwmj').update(data).digest('hex')
 
 export const cutOffPoisonNullByte = (str: string) => {
