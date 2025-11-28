@@ -13,12 +13,37 @@ import { UserModel } from '../models/user'
 import * as utils from '../lib/utils'
 import logger from '../lib/logger'
 
-// WHITELIST de hosts permitidos para download de imagens
-const ALLOWED_HOSTS = [
-  'trusted.cdn.com',
-  'images.owasp.org'
-  // Adiciona aqui outros domínios considerados seguros
-]
+
+const allowedProtocols = ['http:', 'https:'];
+const allowedDomains = ['trusted-domain.com', 'cdn.example.com'];
+
+function validateUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    
+    // Validar protocolo
+    if (!allowedProtocols.includes(parsedUrl.protocol)) {
+      return false;
+    }
+    
+    // Bloquear IPs privados e localhost
+    const hostname = parsedUrl.hostname;
+    if (hostname === 'localhost' || 
+        hostname.startsWith('127.') || 
+        hostname.startsWith('10.') ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('172.')) {
+      return false;
+    }
+    
+    // Opcional: whitelist de domínios
+    // return allowedDomains.some(domain => hostname.endsWith(domain));
+    
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export function profileImageUrlUpload () {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -39,6 +64,10 @@ export function profileImageUrlUpload () {
           }
           if (!ALLOWED_HOSTS.includes(hostname)) {
             return res.status(403).send('Host not allowed')
+          }
+
+          if (!validateUrl(url)) {
+            throw new Error('Invalid or forbidden URL');
           }
 
           const response = await fetch(url)
